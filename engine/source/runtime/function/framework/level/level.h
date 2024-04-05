@@ -40,6 +40,8 @@ namespace Piccolo
 
         std::weak_ptr<PhysicsScene> getPhysicsScene() const { return m_physics_scene; }
 
+        void generateMaze();
+
     protected:
         void clear();
 

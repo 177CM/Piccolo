@@ -16,8 +16,8 @@ namespace Piccolo
         camera_back      = 1 << 1,  // S
         camera_foward    = 1 << 2,  // W
         camera_right     = 1 << 3,  // D
-        camera_up        = 1 << 4,  // Q
-        camera_down      = 1 << 5,  // E
+        camera_up        = 1 << 4,  // E
+        camera_down      = 1 << 5,  // Q
         translation_mode = 1 << 6,  // T
         rotation_mode    = 1 << 7,  // R
         scale_mode       = 1 << 8,  // C

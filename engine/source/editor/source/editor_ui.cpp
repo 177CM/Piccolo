@@ -384,7 +384,16 @@ namespace Piccolo
                 ImGui::MenuItem("Detail", nullptr, &m_detail_window_open);
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu("PCG"))
+            {
+                if(ImGui::MenuItem("Generate Maze"))
+                {
+                    g_runtime_global_context.m_world_manager->generateMazeLevel();
+                }
+                ImGui::EndMenu();
+            }
             ImGui::EndMenuBar();
+            
         }
 
         ImGui::End();
