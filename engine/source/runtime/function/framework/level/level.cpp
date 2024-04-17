@@ -205,7 +205,6 @@ namespace Piccolo
             //在渲染中删除实体
             RenderSwapContext& swap_context = g_runtime_global_context.m_render_system->getSwapContext();
             swap_context.getLogicSwapData().addDeleteGameObject(GameObjectDesc{iter->first,{}});
-
             //在关卡类中将其删除
             deleteGObjectByID(iter->first);
             iter = m_gobjects.begin();
@@ -217,15 +216,24 @@ namespace Piccolo
         Ground.m_definition = "asset/objects/environment/floor/floor.object.json";
         createObject(Ground);
 
-        //3:生成角色
+        //3:生成角色&&终点
         ObjectInstanceRes Player;
         Player.m_name = "Player";
         Player.m_definition = "asset/objects/character/player/player.object.json";
         createObject(Player);
 
+        //TODO::add a object to present the end of maze
+        // ParticleEmitterIDAllocator::reset();
+        // ObjectInstanceRes Emitter;
+        // Player.m_name = "Emitter";
+        // Player.m_definition = "asset/objects/environment/particle/particle.object.json";
+        // createObject(Emitter);
+        // ASSERT(g_runtime_global_context.m_physics_manager);
+        // m_physics_scene = g_runtime_global_context.m_physics_manager->createPhysicsScene({0.f, 0.f, -15.0f});
+
         //4:给定迷宫的列数与行数
-        const int cols = 5;
-        const int rows = 8;
+        const int cols = 20;
+        const int rows = 20;
 
         //5:生成迷宫的数据结构
 
@@ -249,11 +257,6 @@ namespace Piccolo
             }
         }
 
-        // auto checkIndex = [&](int i, int j) -> bool
-        // {
-        //     return i >= 0 && i < rows && j >= 0 && j < cols;
-        // };
-
         
 
         //开始构建迷宫
@@ -262,26 +265,6 @@ namespace Piccolo
             for(int j = 0;j<cols;j++)
             {
                 std::vector<int> candidateDoorsDir;
-                //检查上方
-                // if(checkIndex(i-1,j)&&mazeTypes[i-1][j]!=mazeTypes[i][j])
-                // {
-                //     candidateDoorsDir.push_back(0);
-                // }
-                // //检查右边
-                // if(checkIndex(i,j+1)&&mazeTypes[i][j+1]!=mazeTypes[i][j])
-                // {
-                //     candidateDoorsDir.push_back(1);
-                // }
-                // //检查下面
-                // if(checkIndex(i+1,j)&&mazeTypes[i+1][j]!=mazeTypes[i][j])
-                // {
-                //     candidateDoorsDir.push_back(2);
-                // }
-                // //检查左边
-                // if(checkIndex(i,j-1)&&mazeTypes[i][j-1]!=mazeTypes[i][j])
-                // {
-                //     candidateDoorsDir.push_back(3);
-                // }
                 if(i>0&&mazeTypes[i-1][j]!=mazeTypes[i][j])
                 {
                     candidateDoorsDir.push_back(0);
@@ -305,7 +288,6 @@ namespace Piccolo
                 {
                     break;
                 }
-
                 //随机在能够拆除的墙上选择一个进行拆除
                 int openDoorDir = candidateDoorsDir[std::rand()%candidateDoorsDir.size()];
                 int newRoomID;
@@ -404,8 +386,26 @@ namespace Piccolo
             if("Player" == object->getName())
             {
                 m_current_active_character = std::make_shared<Character>(object);
+                //设置玩家初始位置
+                TransformComponent* transform_component = object->tryGetComponent(TransformComponent);
+                Vector3 startPosition;
+                startPosition.x = -10-10*(rows-1)/2+0*10 +5;
+                startPosition.y = -10*(cols-1)/2+0*10;
+                startPosition.z = 0;
+                transform_component->setPosition(startPosition);
                 continue;
             }
+
+            // if("Emitter" == object->getName())
+            // {
+            //     TransformComponent* transform_component = object->tryGetComponent(TransformComponent);
+            //     Vector3 endPosition;
+            //     endPosition.x = -10-10*(rows-1)/2*(rows-1)*10 +5;
+            //     endPosition.y = -10*(cols-1)/2+(cols-1)*10;
+            //     endPosition.z = 0;
+            //     transform_component->setPosition(endPosition);
+            //     continue;
+            // }
 
             if("Ground" == object->getName())
             {
