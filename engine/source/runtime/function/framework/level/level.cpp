@@ -15,6 +15,7 @@
 #include "runtime/function/global/global_context.h"
 #include "runtime/function/render/render_swap_context.h"
 #include "runtime/function/render/render_system.h"
+#include "runtime/core/math/math.h"
 
 #include <limits>
 
@@ -209,14 +210,8 @@ namespace Piccolo
             deleteGObjectByID(iter->first);
             iter = m_gobjects.begin();
         }
-        //2:生成地面
 
-        ObjectInstanceRes Ground;
-        Ground.m_name = "Ground";
-        Ground.m_definition = "asset/objects/environment/floor/floor.object.json";
-        createObject(Ground);
-
-        //3:生成角色&&终点
+        //2:生成角色&&终点
         ObjectInstanceRes Player;
         Player.m_name = "Player";
         Player.m_definition = "asset/objects/character/player/player.object.json";
@@ -231,9 +226,26 @@ namespace Piccolo
         // ASSERT(g_runtime_global_context.m_physics_manager);
         // m_physics_scene = g_runtime_global_context.m_physics_manager->createPhysicsScene({0.f, 0.f, -15.0f});
 
-        //4:给定迷宫的列数与行数
+        //3:给定迷宫的列数与行数
         const int cols = 20;
-        const int rows = 20;
+        const int rows = 15;
+
+        const float ground_W = 87.1536;
+        const float ground_L = 49.7335; 
+        //4:生成地面
+        float width_of_maze = rows * 10;
+        float length_of_maze = cols * 10;
+
+        int tiles_of_width = static_cast<int>(width_of_maze / ground_W) + 1;
+        int tiles_of_length = static_cast<int>(length_of_maze / ground_L) + 1;
+
+        for(auto i = 0;i<tiles_of_width * tiles_of_length;i++)
+        {
+            ObjectInstanceRes Ground;
+            Ground.m_name = "Ground_" + std::to_string(i);
+            Ground.m_definition = "asset/objects/environment/floor/floor.object.json";
+            createObject(Ground);
+        }
 
         //5:生成迷宫的数据结构
 
@@ -382,7 +394,6 @@ namespace Piccolo
                 continue;
             }
             std::cout<<object->getName();
-
             if("Player" == object->getName())
             {
                 m_current_active_character = std::make_shared<Character>(object);
@@ -395,55 +406,57 @@ namespace Piccolo
                 transform_component->setPosition(startPosition);
                 continue;
             }
+            if("Wall_"==(object->getName().substr(0,5)))
+            {
+                int i = std::stoi(object->getName().substr(5));
+                int rowNum = int(i/(2*cols+1));
+                int colNum = i%(2*cols+1);
+                TransformComponent* transform_component = object->tryGetComponent(TransformComponent);
+                Vector3 new_translation;
+                Quaternion new_rotation;
+                if(colNum <cols)
+                {
+                    new_translation.x = -10-10*(rows-1)/2+rowNum*10;
+                    new_translation.y = -10*(cols-1)/2+colNum*10;
+                    new_translation.z = 0;
+                }
+                else
+                {
+                    colNum-=cols;
+                    new_translation.x = -5-10*(rows-1)/2+rowNum*10;
+                    new_translation.y = -5-10*(cols-1)/2+colNum*10;
+                    Vector3 axis(0,0,1);
+                    Degree d(90.0);
+                    Radian angle(d);
+                    new_rotation.fromAngleAxis(angle,axis);
+                }
+                transform_component->setPosition(new_translation);
+                transform_component->setRotation(new_rotation);
+            }
 
-            // if("Emitter" == object->getName())
-            // {
-            //     TransformComponent* transform_component = object->tryGetComponent(TransformComponent);
-            //     Vector3 endPosition;
-            //     endPosition.x = -10-10*(rows-1)/2*(rows-1)*10 +5;
-            //     endPosition.y = -10*(cols-1)/2+(cols-1)*10;
-            //     endPosition.z = 0;
-            //     transform_component->setPosition(endPosition);
-            //     continue;
-            // }
-
-            if("Ground" == object->getName())
+            if("Ground_"==(object->getName().substr(0,7)))
             {
                 TransformComponent* transform_component = object->tryGetComponent(TransformComponent);
-                Vector3 fixPosition(-5.0,0,0);
+                int i = std::stoi(object->getName().substr(7));
+                int wi = i % tiles_of_width;
+                int li = i / tiles_of_width;
+
+                Vector2 corner = {-10-10*(rows-1)/2 , -10*(cols-1)/2 - 5};
+                float set_X = corner.x + ground_W/2.0;
+                float set_Y = corner.y + ground_L/2.0;
+                set_X += ground_W * wi - (tiles_of_width * ground_W - width_of_maze)/2.0;
+                set_Y += ground_L * li - (tiles_of_length * ground_L - length_of_maze)/2.0;
+
+                Vector3 fixPosition(set_X,set_Y,0);
                 transform_component->setPosition(fixPosition);
                 continue;
             }
+            
 
-            for(int i = 0;i<rows*(2*cols +1)+cols;i++)
-            {
-                if("Wall_"+std::to_string(i)==(object->getName()))
-                {
-                    int rowNum = int(i/(2*cols+1));
-                    int colNum = i%(2*cols+1);
-                    TransformComponent* transform_component = object->tryGetComponent(TransformComponent);
-                    Vector3 new_translation;
-                    Quaternion new_rotation;
-                    if(colNum <cols)
-                    {
-                        new_translation.x = -10-10*(rows-1)/2+rowNum*10;
-                        new_translation.y = -10*(cols-1)/2+colNum*10;
-                        new_translation.z = 0;
-                    }
-                    else
-                    {
-                        colNum-=cols;
-                        new_translation.x = -5-10*(rows-1)/2+rowNum*10;
-                        new_translation.y = -5-10*(cols-1)/2+colNum*10;
-                        Vector3 axis(0,0,1);
-                        Degree d(90.0);
-                        Radian angle(d);
-                        new_rotation.fromAngleAxis(angle,axis);
-                    }
-                    transform_component->setPosition(new_translation);
-                    transform_component->setRotation(new_rotation);
-                }
-            }
+
+
+
+
         }
 
     }
