@@ -392,6 +392,15 @@ namespace Piccolo
                 }
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu("TIPS"))
+            {
+                if (ImGui::MenuItem(g_runtime_global_context.m_render_debug_config->mazeShowWay.show_way ? "off maze way" : "show maze way"))
+                {
+                    LOG_INFO("Show Maze btn be pressed!");
+                    g_runtime_global_context.m_render_debug_config->mazeShowWay.show_way = !g_runtime_global_context.m_render_debug_config->mazeShowWay.show_way;
+                }
+                ImGui::EndMenu();
+            }
             ImGui::EndMenuBar();
             
         }

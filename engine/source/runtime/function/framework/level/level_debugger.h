@@ -23,11 +23,15 @@ namespace Piccolo
         void showBoundingBox(std::shared_ptr<Level> level, GObjectID go_id) const;
         // show camera info
         void showCameraInfo(std::shared_ptr<Level> level) const;
+        // show the maze way
+        void showMazeWay(std::shared_ptr<Level> level) const;
+
 
     private:
         void drawBones(std::shared_ptr<GObject> object) const;
         void drawBonesName(std::shared_ptr<GObject> object) const;
         void drawBoundingBox(std::shared_ptr<GObject> object) const;
         void drawCameraInfo(std::shared_ptr<GObject> object) const;
+        void drawWay(std::shared_ptr<GObject> object) const;
     };
 } // namespace Piccolo

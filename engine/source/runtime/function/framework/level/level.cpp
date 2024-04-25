@@ -18,6 +18,8 @@
 #include "runtime/core/math/math.h"
 
 #include <limits>
+#include <queue>
+#include <algorithm>
 
 namespace Piccolo
 {
@@ -197,48 +199,127 @@ namespace Piccolo
         m_gobjects.erase(go_id);
     }
 
+    void Level::generatePath(bool* mazeDoors,const int& rows,const int& cols ,MazePositionIndex startPos,MazePositionIndex endPos) 
+    {
+        //Helper functions
+        auto getDir = [mazeDoors, rows, cols](const MazePositionIndex& index, int dir) -> bool {
+            return mazeDoors[index.x * cols * 4 + index.y * 4 + dir];
+        };
+        auto checkValid = [&rows,&cols](const MazePositionIndex& index) -> bool{
+            return index.x>=0 && index.x<rows && index.y>=0 && index.y<cols;
+        };
+        //Because it is a grid map, we use Manhattan distance.
+        auto ManhattanDis = [](const MazePositionIndex& index_A ,const MazePositionIndex& index_B) -> int{
+            return Math::abs(index_A.x - index_B.x) + Math::abs(index_A.y - index_B.y);
+        };
+        auto GeometricDis = [](const MazePositionIndex& index_A ,const MazePositionIndex& index_B) -> float{
+            return Math::sqrt(Math::sqr(index_A.x - index_B.x) + Math::sqr(index_A.y - index_B.y));
+        };
+        auto CulculateCost = [startPos,endPos,ManhattanDis,GeometricDis](MazePositionIndex curIndex) -> float{
+            return GeometricDis(startPos,curIndex)+ManhattanDis(endPos,curIndex);
+        };
+        
+        
+        
+        //Initializes the data structure of the open close set in the maze
+        std::priority_queue<MazeNode,std::vector<MazeNode>,std::greater<MazeNode>> open; 
+        std::unordered_set<MazePositionIndex> close;
+        /*std::unordered_map<MazePositionIndex,MazePositionIndex> m_path*/
+
+        std::vector<std::vector<bool>> openLUT(rows,std::vector<bool>(cols,true));
+        auto startPoint = MazeNode(startPos,0,0);
+        open.push(startPoint);
+        close.clear();
+        openLUT[startPos.x][startPos.y] = false; //open priority queue look up table for check whether this element is in the queue
+        // // true:can break    false: cant break
+        MazePositionIndex offset[4] = 
+        {
+            {-1,0},     // 0:Up
+            {0,+1},     // 1:Right
+            {+1,0},     // 2:Down
+            {0,-1}      // 3:Left
+        };  // maze node's dir
+        
+        while(!open.empty())
+        {
+            auto mazeNodeTemp = open.top();
+            open.pop();
+            close.insert(mazeNodeTemp.index);
+            openLUT[mazeNodeTemp.index.x][mazeNodeTemp.index.y] = true;
+            if(mazeNodeTemp.index == endPos)
+            {
+                break;
+            }   
+            for(auto i = 0; i < 4; i++)
+            {
+                MazePositionIndex MPI_temp(mazeNodeTemp.index + offset[i]);
+                if(getDir(mazeNodeTemp.index,i) && checkValid(MPI_temp) && close.find(MPI_temp) == close.end())
+                {
+                    MazeNode temp(MPI_temp, mazeNodeTemp.G+1,ManhattanDis(endPos,MPI_temp));
+                    if (openLUT[MPI_temp.x][MPI_temp.y])
+                    {
+                        openLUT[MPI_temp.x][MPI_temp.y] = false;
+                        m_path[temp.index] = mazeNodeTemp;
+                        open.push(temp);
+                    }
+                    else
+                    {
+                        if(m_path[temp.index].G > temp.G)
+                        {
+                            
+                            m_path[temp.index].G = temp.G;
+                            m_path[temp.index].cost = m_path[temp.index].G + m_path[temp.index].H;
+                            m_path[temp.index].index = temp.index;
+                        }
+                    }
+                }
+            }
+        }
+
+        std::vector<MazePositionIndex> path;
+        auto iter = endPos;
+        while(iter != startPos)
+        {
+            path.push_back(iter);
+            iter = m_path[iter].index;
+        }
+        path.push_back(startPos);
+        std::reverse(path.begin(),path.end());
+        LOG_INFO("Path generate success!");
+    }
+
     void Level::generateMaze()
     {
-        //1:遍历并且删除场景中所有已有的实体
+        //1:Iterate through and delete all existing entities in the scene
         auto iter = m_gobjects.begin();
         while(iter != m_gobjects.end())
         {
-            //在渲染中删除实体
+            //Delete render entities
             RenderSwapContext& swap_context = g_runtime_global_context.m_render_system->getSwapContext();
             swap_context.getLogicSwapData().addDeleteGameObject(GameObjectDesc{iter->first,{}});
-            //在关卡类中将其删除
+            //Delete in the level class
             deleteGObjectByID(iter->first);
             iter = m_gobjects.begin();
         }
 
-        //2:生成角色&&终点
+        //2:Generate startPos and endPos
         ObjectInstanceRes Player;
         Player.m_name = "Player";
         Player.m_definition = "asset/objects/character/player/player.object.json";
         createObject(Player);
+        //TODO: endPos
 
-        //TODO::add a object to present the end of maze
-        // ParticleEmitterIDAllocator::reset();
-        // ObjectInstanceRes Emitter;
-        // Player.m_name = "Emitter";
-        // Player.m_definition = "asset/objects/environment/particle/particle.object.json";
-        // createObject(Emitter);
-        // ASSERT(g_runtime_global_context.m_physics_manager);
-        // m_physics_scene = g_runtime_global_context.m_physics_manager->createPhysicsScene({0.f, 0.f, -15.0f});
-
-        //3:给定迷宫的列数与行数
+        //3:rows and cols
         const int cols = 20;
         const int rows = 15;
 
+        //4:Generate the ground
         const float ground_W = 87.1536;
         const float ground_L = 49.7335; 
-        //4:生成地面
         float width_of_maze = rows * 10;
         float length_of_maze = cols * 10;
-
         int tiles_of_width = static_cast<int>(width_of_maze / ground_W) + 1;
         int tiles_of_length = static_cast<int>(length_of_maze / ground_L) + 1;
-
         for(auto i = 0;i<tiles_of_width * tiles_of_length;i++)
         {
             ObjectInstanceRes Ground;
@@ -247,14 +328,10 @@ namespace Piccolo
             createObject(Ground);
         }
 
-        //5:生成迷宫的数据结构
-
+        //5:Generate the struct of Maze
         int mazeTypes[rows][cols];
-        bool mazeDoors[rows][cols][4];//代表每个迷宫节点的方向
-        //0:Up      1:Right     2:Down      3:Left
-        //true:can break    false: cant break
-        
-        //初始化迷宫
+        bool mazeDoors[rows][cols][4]; // Maze node Dir -> 0:Up      1:Right     2:Down      3:Left   true:can break    false: cant break
+        //Init maze
         for(int i = 0;i <rows;i++)
         {
             for(int j = 0;j<cols;j++)
@@ -269,9 +346,8 @@ namespace Piccolo
             }
         }
 
-        
 
-        //开始构建迷宫
+        //Build maze
         for(int i = 0;i <rows;i++)
         {
             for(int j = 0;j<cols;j++)
@@ -281,17 +357,17 @@ namespace Piccolo
                 {
                     candidateDoorsDir.push_back(0);
                 }
-                //检查右边
+                //check right
                 if(j<cols-1&&mazeTypes[i][j+1]!=mazeTypes[i][j])
                 {
                     candidateDoorsDir.push_back(1);
                 }
-                //检查下面
+                //check down
                 if(i<rows-1&&mazeTypes[i+1][j]!=mazeTypes[i][j])
                 {
                     candidateDoorsDir.push_back(2);
                 }
-                //检查左边
+                // check right
                 if(j>0&&mazeTypes[i][j-1]!=mazeTypes[i][j])
                 {
                     candidateDoorsDir.push_back(3);
@@ -300,33 +376,32 @@ namespace Piccolo
                 {
                     break;
                 }
-                //随机在能够拆除的墙上选择一个进行拆除
+                //Randomly break wall
                 int openDoorDir = candidateDoorsDir[std::rand()%candidateDoorsDir.size()];
                 int newRoomID;
                 mazeDoors[i][j][openDoorDir] = true;
                 switch (openDoorDir)        //0:Up      1:Right     2:Down      3:Left
                 {
-                case 0:
-                    mazeDoors[i-1][j][2] = true;
-                    newRoomID = mazeTypes[i-1][j];
-                    break;
-                case 1:
-                    mazeDoors[i][j+1][3] = true;
-                    newRoomID = mazeTypes[i][j+1];
-                    break;
-                case 2:
-                    mazeDoors[i+1][j][0] = true;
-                    newRoomID = mazeTypes[i+1][j];
-                    break;
-                case 3:
-                    mazeDoors[i][j-1][1] = true;
-                    newRoomID = mazeTypes[i][j-1];
-                    break;
-                
-                default:
-                    break;
+                    case 0:
+                        mazeDoors[i-1][j][2] = true;
+                        newRoomID = mazeTypes[i-1][j];
+                        break;
+                    case 1:
+                        mazeDoors[i][j+1][3] = true;
+                        newRoomID = mazeTypes[i][j+1];
+                        break;
+                    case 2:
+                        mazeDoors[i+1][j][0] = true;
+                        newRoomID = mazeTypes[i+1][j];
+                        break;
+                    case 3:
+                        mazeDoors[i][j-1][1] = true;
+                        newRoomID = mazeTypes[i][j-1];
+                        break;
+                    
+                    default:
+                        break;
                 }
-
                 int oldDoorID = mazeTypes[i][j];
                 for(int ii = 0;ii<rows;ii++)
                 {
@@ -342,12 +417,12 @@ namespace Piccolo
             }
         }
 
-        //6:根据迷宫的数据结构生成墙壁
+        //6:Generate the walls
         for(int i = 0;i<rows;i++)
         {
             for(int j = 0;j<cols;j++)
             {
-                //上面的墙壁
+                //Up
                 if(!mazeDoors[i][j][0])
                 {
                     int wallNum = i*(2*cols +1)+j;
@@ -356,7 +431,7 @@ namespace Piccolo
                     Wall.m_definition = "asset/objects/environment/wall/wall.object.json";
                     createObject(Wall);
                 }
-                //左边的墙壁
+                //Left
                 if(!mazeDoors[i][j][3])
                 {
                     int wallNum = i*(2*cols +1)+j+cols;
@@ -365,7 +440,7 @@ namespace Piccolo
                     Wall.m_definition = "asset/objects/environment/wall/wall.object.json";
                     createObject(Wall);
                 }
-                //最右边的墙壁
+                //Right
                 if(j==cols-1)
                 {
                     int wallNum = i*(2*cols +1)+j+cols+1;
@@ -374,7 +449,7 @@ namespace Piccolo
                     Wall.m_definition = "asset/objects/environment/wall/wall.object.json";
                     createObject(Wall);
                 }
-                //最下面的墙壁
+                //Down
                 if(i==rows-1)
                 {
                     int wallNum = i*(2*cols +1)+j+2*cols+1;
@@ -386,6 +461,7 @@ namespace Piccolo
             }
         }
 
+        //7:Place the object in the maze
         for(const auto& object_pair :m_gobjects)
         {
             std::shared_ptr<GObject> object = object_pair.second;
@@ -393,11 +469,9 @@ namespace Piccolo
             {
                 continue;
             }
-            std::cout<<object->getName();
             if("Player" == object->getName())
             {
                 m_current_active_character = std::make_shared<Character>(object);
-                //设置玩家初始位置
                 TransformComponent* transform_component = object->tryGetComponent(TransformComponent);
                 Vector3 startPosition;
                 startPosition.x = -10-10*(rows-1)/2+0*10 +5;
@@ -451,13 +525,9 @@ namespace Piccolo
                 transform_component->setPosition(fixPosition);
                 continue;
             }
-            
-
-
-
-
-
         }
+        //8:generate the path from startPos to endPos
+        generatePath(&mazeDoors[0][0][0],rows,cols,{0,0},{rows-1,cols-1});
 
     }
 

@@ -16,9 +16,15 @@ namespace Piccolo
         {
             bool show_bounding_box = false;
         };
+        struct MazeShowWay
+        {
+            bool show_way = false;
+        };
 
         Animation animation;
         Camera camera;
         GameObject gameObject;
+        MazeShowWay mazeShowWay;
+
     };
 }
