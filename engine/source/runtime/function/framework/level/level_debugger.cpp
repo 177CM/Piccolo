@@ -4,6 +4,7 @@
 #include "runtime/function/character/character.h"
 #include "runtime/function/framework/component/camera/camera_component.h"
 #include "runtime/function/framework/component/component.h"
+#include "runtime/function/framework/component/label/label_component.h"
 #include "runtime/function/framework/component/transform/transform_component.h"
 #include "runtime/resource/res_type/components/animation.h"
 
@@ -45,12 +46,11 @@ namespace Piccolo
 
     void LevelDebugger::showMazeWay(std::shared_ptr<Level> level) const
     {
-        // TODO:
-        //  const LevelObjectsMap& go_map = level->getAllGObjects();
-        //  for (const auto& gobject_pair : go_map)
-        //  {
-        //      drawWay(gobject_pair.second);
-        //  }
+        const LevelObjectsMap& go_map = level->getAllGObjects();
+        for (const auto& gobject_pair : go_map)
+        {
+            drawWay(gobject_pair.second);
+        }
     }
 
     void LevelDebugger::showAllBones(std::shared_ptr<Level> level) const
@@ -224,6 +224,20 @@ namespace Piccolo
             debug_draw_group->addBox(
                 center, halfExtent, Vector4(1.0f, 0.0f, 0.0f, 0.0f), Vector4(0.0f, 1.0f, 0.0f, 1.0f));
         }
+    }
+
+    void LevelDebugger::drawWay(std::shared_ptr<GObject> object) const
+    {
+        const LabelComponent*     label_component = object->tryGetComponentConst<LabelComponent>("LabelComponent");
+        const TransformComponent* transfrom_component =
+            object->tryGetComponentConst<TransformComponent>("TransformComponent");
+        if (label_component == nullptr)
+            return;
+        DebugDrawGroup* debug_draw_group =
+            g_runtime_global_context.m_debugdraw_manager->tryGetOrCreateDebugDrawGroup("maze path");
+        auto postion_temp = transfrom_component->getPosition();
+        debug_draw_group->addSphere(
+            postion_temp + Vector3(0, 0, 5), 0.5f, Vector4(0.3f, 0.2f, 0.5f, 1.0f), 0.0f, false);
     }
 
     void LevelDebugger::drawCameraInfo(std::shared_ptr<GObject> object) const

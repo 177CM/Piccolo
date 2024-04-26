@@ -226,12 +226,14 @@ namespace Piccolo
         // Initializes the data structure of the open close set in the maze
         std::priority_queue<MazeNode, std::vector<MazeNode>, std::greater<MazeNode>> open;
         std::unordered_set<MazePositionIndex>                                        close;
+        std::unordered_map<MazePositionIndex, MazeNode>                              all_path; // node -> parent
         /*std::unordered_map<MazePositionIndex,MazePositionIndex> m_path*/
 
         std::vector<std::vector<bool>> openLUT(rows, std::vector<bool>(cols, true));
         auto                           startPoint = MazeNode(startPos, 0, 0);
         open.push(startPoint);
         close.clear();
+        m_path.clear();
         openLUT[startPos.x][startPos.y] =
             false; // open priority queue look up table for check whether this element is in the queue
         // // true:can break    false: cant break
@@ -261,34 +263,31 @@ namespace Piccolo
                     if (openLUT[MPI_temp.x][MPI_temp.y])
                     {
                         openLUT[MPI_temp.x][MPI_temp.y] = false;
-                        m_path[temp.index]              = mazeNodeTemp;
+                        all_path[temp.index]            = mazeNodeTemp;
                         open.push(temp);
                     }
                     else
                     {
-                        if (m_path[temp.index].G > temp.G)
+                        if (all_path[temp.index].G > temp.G)
                         {
 
-                            m_path[temp.index].G     = temp.G;
-                            m_path[temp.index].cost  = m_path[temp.index].G + m_path[temp.index].H;
-                            m_path[temp.index].index = temp.index;
+                            all_path[temp.index].G     = temp.G;
+                            all_path[temp.index].cost  = all_path[temp.index].G + all_path[temp.index].H;
+                            all_path[temp.index].index = temp.index;
                         }
                     }
                 }
             }
         }
-
-        std::vector<MazePositionIndex> path;
-        auto                           iter = endPos;
+        auto iter = endPos;
         while (iter != startPos)
         {
-            path.push_back(iter);
-            iter = m_path[iter].index;
+            m_path.push_back(iter);
+            iter = all_path[iter].index;
         }
-        path.push_back(startPos);
-        std::reverse(path.begin(), path.end());
+        m_path.push_back(startPos);
+        std::reverse(m_path.begin(), m_path.end());
         LOG_INFO("Path generate success!");
-        auto i = 1 + 1;
     }
 
     void Level::generateMaze()
@@ -419,6 +418,17 @@ namespace Piccolo
             }
         }
 
+        // generate the path from startPos to endPos
+        generatePath(&mazeDoors[0][0][0], rows, cols, {0, 0}, {rows - 1, cols - 1});
+
+        for (auto i = 0; i < m_path.size(); i++)
+        {
+            ObjectInstanceRes Hint;
+            Hint.m_name       = "Hint_" + std::to_string(i);
+            Hint.m_definition = "asset/objects/environment/label/label.object.json";
+            createObject(Hint);
+        }
+
         // 6:Generate the walls
         for (int i = 0; i < rows; i++)
         {
@@ -464,6 +474,10 @@ namespace Piccolo
         }
 
         // 7:Place the object in the maze
+        Vector3 startPosition;
+        startPosition.x = -10 - 10 * (rows - 1) / 2 + 5;
+        startPosition.y = -10 * (cols - 1) / 2;
+        startPosition.z = 0;
         for (const auto& object_pair : m_gobjects)
         {
             std::shared_ptr<GObject> object = object_pair.second;
@@ -475,10 +489,6 @@ namespace Piccolo
             {
                 m_current_active_character              = std::make_shared<Character>(object);
                 TransformComponent* transform_component = object->tryGetComponent(TransformComponent);
-                Vector3             startPosition;
-                startPosition.x = -10 - 10 * (rows - 1) / 2 + 0 * 10 + 5;
-                startPosition.y = -10 * (cols - 1) / 2 + 0 * 10;
-                startPosition.z = 0;
                 transform_component->setPosition(startPosition);
                 continue;
             }
@@ -509,7 +519,16 @@ namespace Piccolo
                 transform_component->setPosition(new_translation);
                 transform_component->setRotation(new_rotation);
             }
-
+            if ("Hint_" == (object->getName().substr(0, 5)))
+            {
+                Vector3             new_translation;
+                int                 i                   = std::stoi(object->getName().substr(5));
+                auto                index               = m_path[i];
+                TransformComponent* transform_component = object->tryGetComponent(TransformComponent);
+                new_translation.x                       = startPosition.x + 10 * index.x;
+                new_translation.y                       = startPosition.y + 10 * index.y;
+                transform_component->setPosition(new_translation);
+            }
             if ("Ground_" == (object->getName().substr(0, 7)))
             {
                 TransformComponent* transform_component = object->tryGetComponent(TransformComponent);
@@ -528,8 +547,6 @@ namespace Piccolo
                 continue;
             }
         }
-        // 8:generate the path from startPos to endPos
-        generatePath(&mazeDoors[0][0][0], rows, cols, {0, 0}, {rows - 1, cols - 1});
     }
 
 } // namespace Piccolo

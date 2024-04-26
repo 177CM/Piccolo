@@ -114,6 +114,8 @@ namespace Piccolo
                           MazePositionIndex startPos,
                           MazePositionIndex endPos);
 
+        std::vector<MazePositionIndex> getMazePath() { return m_path; }
+
     protected:
         void clear();
 
@@ -127,7 +129,6 @@ namespace Piccolo
 
         std::weak_ptr<PhysicsScene> m_physics_scene;
 
-        // node -> parent
-        std::unordered_map<MazePositionIndex, MazeNode> m_path;
+        std::vector<MazePositionIndex> m_path;
     };
 } // namespace Piccolo
