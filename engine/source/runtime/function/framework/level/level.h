@@ -1,22 +1,22 @@
 #pragma once
 
-#include "runtime/function/framework/object/object_id_allocator.h"
 #include "runtime/core/math/vector2.h"
+#include "runtime/function/framework/object/object_id_allocator.h"
 
 #include <memory>
+#include <runtime/core/base/hash.h>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <runtime/core/base/hash.h>
 
 namespace Piccolo
 {
     struct MazePositionIndex
     {
-        int x,y;
-        bool operator==(const MazePositionIndex& other) const {return (x == other.x) && (y == other.y);}
-        bool operator!=(const MazePositionIndex& other) const {return (x != other.x) || (y != other.y);}
-        MazePositionIndex operator+(const MazePositionIndex& other) const 
+        int               x, y;
+        bool              operator==(const MazePositionIndex& other) const { return (x == other.x) && (y == other.y); }
+        bool              operator!=(const MazePositionIndex& other) const { return (x != other.x) || (y != other.y); }
+        MazePositionIndex operator+(const MazePositionIndex& other) const
         {
             MazePositionIndex result;
             result.x = x + other.x;
@@ -25,12 +25,8 @@ namespace Piccolo
         }
         MazePositionIndex(int _x, int _y) : x(_x), y(_y) {}
         MazePositionIndex() : x(0), y(0) {}
-        bool operator<(const MazePositionIndex& rhs) const{
-            return this->x < rhs.x;
-        }
-        bool operator>(const MazePositionIndex& rhs) const{
-            return this->x > rhs.x;
-        }
+        bool operator<(const MazePositionIndex& rhs) const { return this->x < rhs.x; }
+        bool operator>(const MazePositionIndex& rhs) const { return this->x > rhs.x; }
     };
     // struct MazePositionIndexHash
     // {//use at unordered_set hash operation
@@ -45,42 +41,38 @@ namespace Piccolo
     struct MazeNode
     {
         MazePositionIndex index;
-        int G;
-        int H;
-        int cost;
-        bool operator<(const MazeNode& rhs) const{
-            return this->cost < rhs.cost;
-        }
-        bool operator>(const MazeNode& rhs) const{
-            return this->cost > rhs.cost;
-        }
+        int               G;
+        int               H;
+        int               cost;
+        bool              operator<(const MazeNode& rhs) const { return this->cost < rhs.cost; }
+        bool              operator>(const MazeNode& rhs) const { return this->cost > rhs.cost; }
         MazeNode() : G(0), H(0), cost(0) {}
-        MazeNode(const MazePositionIndex& _index, int _G,int _H) : index(_index), G(_G) ,H(_H),cost(_G+_H) {}
+        MazeNode(const MazePositionIndex& _index, int _G, int _H) : index(_index), G(_G), H(_H), cost(_G + _H) {}
     };
-}// namespace Piccolo
+} // namespace Piccolo
 namespace std
 {
-    template <>
+    template<>
     struct hash<Piccolo::MazePositionIndex>
     {
-        size_t operator()(Piccolo::MazePositionIndex const &posIndex) const
+        size_t operator()(Piccolo::MazePositionIndex const& posIndex) const
         {
             size_t seed = 0;
-            hash_combine(seed, posIndex.x,posIndex.y);
+            hash_combine(seed, posIndex.x, posIndex.y);
             return seed;
         }
     };
-    template <>
+    template<>
     struct hash<Piccolo::MazeNode>
     {
-        size_t operator()(Piccolo::MazeNode const &mazeNode) const
+        size_t operator()(Piccolo::MazeNode const& mazeNode) const
         {
             size_t seed = 0;
-            hash_combine(seed, mazeNode.index,mazeNode.cost);
+            hash_combine(seed, mazeNode.index, mazeNode.cost);
             return seed;
         }
     };
-} 
+} // namespace std
 namespace Piccolo
 {
     class Character;
@@ -93,7 +85,7 @@ namespace Piccolo
     class Level
     {
     public:
-        virtual ~Level(){};
+        virtual ~Level() {};
 
         bool load(const std::string& level_res_url);
         void unload();
@@ -116,8 +108,11 @@ namespace Piccolo
 
         void generateMaze();
 
-        void generatePath(bool* mazeDoors,const int& rows,const int& cols ,MazePositionIndex startPos,MazePositionIndex endPos);
-        
+        void generatePath(bool*             mazeDoors,
+                          const int&        rows,
+                          const int&        cols,
+                          MazePositionIndex startPos,
+                          MazePositionIndex endPos);
 
     protected:
         void clear();
@@ -132,10 +127,7 @@ namespace Piccolo
 
         std::weak_ptr<PhysicsScene> m_physics_scene;
 
-        // node -> parent 
-        std::unordered_map<MazePositionIndex,MazeNode> m_path;
+        // node -> parent
+        std::unordered_map<MazePositionIndex, MazeNode> m_path;
     };
 } // namespace Piccolo
-
-
-

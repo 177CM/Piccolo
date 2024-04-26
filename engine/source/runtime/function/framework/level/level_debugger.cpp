@@ -37,7 +37,7 @@ namespace Piccolo
         {
             showCameraInfo(level);
         }
-        if(g_runtime_global_context.m_render_debug_config->mazeShowWay.show_way)
+        if (g_runtime_global_context.m_render_debug_config->mazeShowWay.show_way)
         {
             showMazeWay(level);
         }
@@ -45,14 +45,13 @@ namespace Piccolo
 
     void LevelDebugger::showMazeWay(std::shared_ptr<Level> level) const
     {
-        //TODO:
-        // const LevelObjectsMap& go_map = level->getAllGObjects();
-        // for (const auto& gobject_pair : go_map)
-        // {
-        //     drawWay(gobject_pair.second);
-        // }
+        // TODO:
+        //  const LevelObjectsMap& go_map = level->getAllGObjects();
+        //  for (const auto& gobject_pair : go_map)
+        //  {
+        //      drawWay(gobject_pair.second);
+        //  }
     }
-
 
     void LevelDebugger::showAllBones(std::shared_ptr<Level> level) const
     {

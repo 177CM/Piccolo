@@ -26,7 +26,6 @@ namespace Piccolo
         // show the maze way
         void showMazeWay(std::shared_ptr<Level> level) const;
 
-
     private:
         void drawBones(std::shared_ptr<GObject> object) const;
         void drawBonesName(std::shared_ptr<GObject> object) const;

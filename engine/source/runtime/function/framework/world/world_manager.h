@@ -43,7 +43,7 @@ namespace Piccolo
         // active level, currently we just support one active level
         std::weak_ptr<Level> m_current_active_level;
 
-        //debug level
+        // debug level
         std::shared_ptr<LevelDebugger> m_level_debugger;
     };
 } // namespace Piccolo
