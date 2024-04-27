@@ -1,78 +1,12 @@
 #pragma once
 
-#include "runtime/core/math/vector2.h"
+#include "runtime/function/framework/level/level.h"
+#include "runtime/function/framework/level/maze_manager.h"
 #include "runtime/function/framework/object/object_id_allocator.h"
 
 #include <memory>
-#include <runtime/core/base/hash.h>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
-
-namespace Piccolo
-{
-    struct MazePositionIndex
-    {
-        int               x, y;
-        bool              operator==(const MazePositionIndex& other) const { return (x == other.x) && (y == other.y); }
-        bool              operator!=(const MazePositionIndex& other) const { return (x != other.x) || (y != other.y); }
-        MazePositionIndex operator+(const MazePositionIndex& other) const
-        {
-            MazePositionIndex result;
-            result.x = x + other.x;
-            result.y = y + other.y;
-            return result;
-        }
-        MazePositionIndex(int _x, int _y) : x(_x), y(_y) {}
-        MazePositionIndex() : x(0), y(0) {}
-        bool operator<(const MazePositionIndex& rhs) const { return this->x < rhs.x; }
-        bool operator>(const MazePositionIndex& rhs) const { return this->x > rhs.x; }
-    };
-    // struct MazePositionIndexHash
-    // {//use at unordered_set hash operation
-    //     size_t operator()(Piccolo::MazePositionIndex const &posIndex) const
-    //     {
-    //     size_t seed = 0;
-    //     hash_combine(seed, posIndex.x,posIndex.y);
-    //     return seed;
-    //     }
-    // };
-
-    struct MazeNode
-    {
-        MazePositionIndex index;
-        int               G;
-        int               H;
-        int               cost;
-        bool              operator<(const MazeNode& rhs) const { return this->cost < rhs.cost; }
-        bool              operator>(const MazeNode& rhs) const { return this->cost > rhs.cost; }
-        MazeNode() : G(0), H(0), cost(0) {}
-        MazeNode(const MazePositionIndex& _index, int _G, int _H) : index(_index), G(_G), H(_H), cost(_G + _H) {}
-    };
-} // namespace Piccolo
-namespace std
-{
-    template<>
-    struct hash<Piccolo::MazePositionIndex>
-    {
-        size_t operator()(Piccolo::MazePositionIndex const& posIndex) const
-        {
-            size_t seed = 0;
-            hash_combine(seed, posIndex.x, posIndex.y);
-            return seed;
-        }
-    };
-    template<>
-    struct hash<Piccolo::MazeNode>
-    {
-        size_t operator()(Piccolo::MazeNode const& mazeNode) const
-        {
-            size_t seed = 0;
-            hash_combine(seed, mazeNode.index, mazeNode.cost);
-            return seed;
-        }
-    };
-} // namespace std
 namespace Piccolo
 {
     class Character;
@@ -85,6 +19,8 @@ namespace Piccolo
     class Level
     {
     public:
+        friend class MazeManager;
+
         virtual ~Level() {};
 
         bool load(const std::string& level_res_url);
@@ -106,15 +42,7 @@ namespace Piccolo
 
         std::weak_ptr<PhysicsScene> getPhysicsScene() const { return m_physics_scene; }
 
-        void generateMaze();
-
-        void generatePath(bool*             mazeDoors,
-                          const int&        rows,
-                          const int&        cols,
-                          MazePositionIndex startPos,
-                          MazePositionIndex endPos);
-
-        std::vector<MazePositionIndex> getMazePath() { return m_path; }
+        MazeManager& getMazeManager() { return m_maze_manager; }
 
     protected:
         void clear();
@@ -129,6 +57,6 @@ namespace Piccolo
 
         std::weak_ptr<PhysicsScene> m_physics_scene;
 
-        std::vector<MazePositionIndex> m_path;
+        MazeManager m_maze_manager;
     };
 } // namespace Piccolo

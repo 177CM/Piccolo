@@ -168,6 +168,8 @@ namespace Piccolo
             LOG_ERROR("No active level right now!");
             return;
         }
-        active_level->generateMaze();
+        auto maze_manager = active_level->getMazeManager();
+        maze_manager.setRowAndCol(15, 20);
+        maze_manager.generateMaze(active_level);
     }
 } // namespace Piccolo
