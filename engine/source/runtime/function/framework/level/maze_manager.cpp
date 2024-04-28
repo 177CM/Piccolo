@@ -68,9 +68,10 @@ namespace Piccolo
         }
 
         // 5:Generate the struct of Maze
-        std::vector<std::vector<int>>               mazeTypes {m_row, std::vector<int>(m_col)};
-        std::vector<std::vector<std::vector<bool>>> mazeDoors {
-            m_row, std::vector<std::vector<bool>>(m_col, std::vector<bool>(4, false))};
+        std::vector<std::vector<int>>               mazeTypes(m_row, std::vector<int>(m_col));
+        std::vector<std::vector<std::vector<bool>>> mazeDoors(
+            m_row, std::vector<std::vector<bool>>(m_col, std::vector<bool>(4, false)));
+
         // Maze node Dir -> 0:Up      1:Right     2:Down      3:Left   true:can break  false: cant break
         // Init maze
         for (int i = 0; i < m_row; i++)
@@ -153,7 +154,7 @@ namespace Piccolo
         }
 
         // generate the path from startPos to endPos
-        generatePath(mazeDoors, {0, 0}, {static_cast<int>(m_row) - 1, static_cast<int>(m_col) - 1});
+        generatePath(mazeDoors, {0, 0}, {m_row - 1, m_col - 1});
 
         for (auto i = 0; i < m_path.size(); i++)
         {
@@ -209,8 +210,8 @@ namespace Piccolo
 
         // 7:Place the object in the maze
         Vector3 startPosition;
-        startPosition.x = -10 - 10 * (static_cast<int>(m_row) - 1) / 2 + 5;
-        startPosition.y = -10 * (static_cast<int>(m_col) - 1) / 2;
+        startPosition.x = -10 - 10 * (m_row - 1) / 2 + 5;
+        startPosition.y = -10 * (m_col - 1) / 2;
         startPosition.z = 0;
         for (const auto& object_pair : level->m_gobjects)
         {
@@ -229,22 +230,22 @@ namespace Piccolo
             if ("Wall_" == (object->getName().substr(0, 5)))
             {
                 int                 i                   = std::stoi(object->getName().substr(5));
-                int                 rowNum              = int(i / (2 * static_cast<int>(m_col) + 1));
-                int                 colNum              = i % (2 * static_cast<int>(m_col) + 1);
+                int                 rowNum              = int(i / (2 * m_col + 1));
+                int                 colNum              = i % (2 * m_col + 1);
                 TransformComponent* transform_component = object->tryGetComponent(TransformComponent);
                 Vector3             new_translation;
                 Quaternion          new_rotation;
-                if (colNum < static_cast<int>(m_col))
+                if (colNum < m_col)
                 {
-                    new_translation.x = -10 - 10 * (static_cast<int>(m_row) - 1) / 2 + rowNum * 10;
-                    new_translation.y = -10 * (static_cast<int>(m_col) - 1) / 2 + colNum * 10;
+                    new_translation.x = -10 - 10 * (m_row - 1) / 2 + rowNum * 10;
+                    new_translation.y = -10 * (m_col - 1) / 2 + colNum * 10;
                     new_translation.z = 0;
                 }
                 else
                 {
-                    colNum -= static_cast<int>(m_col);
-                    new_translation.x = -5 - 10 * (static_cast<int>(m_row) - 1) / 2 + rowNum * 10;
-                    new_translation.y = -5 - 10 * (static_cast<int>(m_col) - 1) / 2 + colNum * 10;
+                    colNum -= m_col;
+                    new_translation.x = -5 - 10 * (m_row - 1) / 2 + rowNum * 10;
+                    new_translation.y = -5 - 10 * (m_col - 1) / 2 + colNum * 10;
                     Vector3 axis(0, 0, 1);
                     Degree  d(90.0);
                     Radian  angle(d);
@@ -296,8 +297,9 @@ namespace Piccolo
         std::unordered_map<MazePositionIndex, MazeNode>                              all_path; // cur node -> parent
         /*std::unordered_map<MazePositionIndex,MazePositionIndex> m_path*/
 
-        std::vector<std::vector<bool>> openLUT {m_row, std::vector<bool>(m_col, true)};
-        auto                           startPoint = MazeNode(startPos, 0, 0);
+        std::vector<std::vector<bool>> openLUT(m_row, std::vector<bool>(m_col, true));
+
+        auto startPoint = MazeNode(startPos, 0, 0);
         open.push(startPoint);
         close.clear();
         m_path.clear();

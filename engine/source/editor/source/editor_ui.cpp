@@ -403,6 +403,20 @@ namespace Piccolo
                 {
                     g_runtime_global_context.m_world_manager->generateMazeLevel();
                 }
+                ImGui::SliderInt("The Maze row Size",
+                                 &(g_runtime_global_context.m_world_manager->getCurrentActiveLevel()
+                                       .lock()
+                                       ->getMazeManager()
+                                       .getRow()),
+                                 0,
+                                 100);
+                ImGui::SliderInt("The Maze col Size",
+                                 &(g_runtime_global_context.m_world_manager->getCurrentActiveLevel()
+                                       .lock()
+                                       ->getMazeManager()
+                                       .getCol()),
+                                 0,
+                                 100);
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("TIPS"))

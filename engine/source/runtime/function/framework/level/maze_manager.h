@@ -76,11 +76,8 @@ namespace Piccolo
                           MazePositionIndex                            startPos,
                           MazePositionIndex                            endPos);
 
-        inline void setRowAndCol(uint64_t row, uint64_t col)
-        {
-            m_row = row;
-            m_col = col;
-        }
+        int& getRow() { return m_row; }
+        int& getCol() { return m_col; }
         MazeManager() {}
         ~MazeManager() {}
 
@@ -111,8 +108,8 @@ namespace Piccolo
         void clearCurrentLevel(std::shared_ptr<Level> level);
 
     private:
-        uint64_t                       m_row = 0;
-        uint64_t                       m_col = 0;
+        int                            m_row = 0;
+        int                            m_col = 0;
         std::vector<MazePositionIndex> m_path;
     };
 } // namespace Piccolo

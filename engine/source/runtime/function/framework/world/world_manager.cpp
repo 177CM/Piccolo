@@ -169,7 +169,7 @@ namespace Piccolo
             return;
         }
         auto maze_manager = active_level->getMazeManager();
-        maze_manager.setRowAndCol(15, 20);
+        // maze_manager.setRowAndCol(15, 20);
         maze_manager.generateMaze(active_level);
     }
 } // namespace Piccolo
