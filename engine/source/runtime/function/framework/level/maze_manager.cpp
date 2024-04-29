@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <memory>
 #include <queue>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace Piccolo
@@ -68,8 +69,9 @@ namespace Piccolo
         }
 
         // 5:Generate the struct of Maze
-        std::vector<std::vector<int>>               mazeTypes(m_row, std::vector<int>(m_col));
-        std::vector<std::vector<std::vector<bool>>> mazeDoors(
+        std::vector<std::vector<int>>                           mazeIndex2Type(m_row, std::vector<int>(m_col));
+        std::unordered_map<int, std::vector<MazePositionIndex>> mazeType2Indexs;
+        std::vector<std::vector<std::vector<bool>>>             mazeDoors(
             m_row, std::vector<std::vector<bool>>(m_col, std::vector<bool>(4, false)));
 
         // Maze node Dir -> 0:Up      1:Right     2:Down      3:Left   true:can break  false: cant break
@@ -79,7 +81,8 @@ namespace Piccolo
             for (int j = 0; j < m_col; j++)
             {
                 // init type of the maze node
-                mazeTypes[i][j] = i * m_col + j;
+                mazeIndex2Type[i][j]           = i * m_col + j;
+                mazeType2Indexs[i * m_col + j] = {{i, j}};
             }
         }
 
@@ -89,22 +92,22 @@ namespace Piccolo
             for (int j = 0; j < m_col; j++)
             {
                 std::vector<int> candidateDoorsDir;
-                if (i > 0 && mazeTypes[i - 1][j] != mazeTypes[i][j])
+                if (i > 0 && mazeIndex2Type[i - 1][j] != mazeIndex2Type[i][j])
                 {
                     candidateDoorsDir.push_back(0);
                 }
                 // check right
-                if (j < m_col - 1 && mazeTypes[i][j + 1] != mazeTypes[i][j])
+                if (j < m_col - 1 && mazeIndex2Type[i][j + 1] != mazeIndex2Type[i][j])
                 {
                     candidateDoorsDir.push_back(1);
                 }
                 // check down
-                if (i < m_row - 1 && mazeTypes[i + 1][j] != mazeTypes[i][j])
+                if (i < m_row - 1 && mazeIndex2Type[i + 1][j] != mazeIndex2Type[i][j])
                 {
                     candidateDoorsDir.push_back(2);
                 }
                 // check right
-                if (j > 0 && mazeTypes[i][j - 1] != mazeTypes[i][j])
+                if (j > 0 && mazeIndex2Type[i][j - 1] != mazeIndex2Type[i][j])
                 {
                     candidateDoorsDir.push_back(3);
                 }
@@ -121,35 +124,33 @@ namespace Piccolo
                 {
                     case 0:
                         mazeDoors[i - 1][j][2] = true;
-                        newRoomID              = mazeTypes[i - 1][j];
+                        newRoomID              = mazeIndex2Type[i - 1][j];
                         break;
                     case 1:
                         mazeDoors[i][j + 1][3] = true;
-                        newRoomID              = mazeTypes[i][j + 1];
+                        newRoomID              = mazeIndex2Type[i][j + 1];
                         break;
                     case 2:
                         mazeDoors[i + 1][j][0] = true;
-                        newRoomID              = mazeTypes[i + 1][j];
+                        newRoomID              = mazeIndex2Type[i + 1][j];
                         break;
                     case 3:
                         mazeDoors[i][j - 1][1] = true;
-                        newRoomID              = mazeTypes[i][j - 1];
+                        newRoomID              = mazeIndex2Type[i][j - 1];
                         break;
 
                     default:
                         break;
                 }
-                int oldDoorID = mazeTypes[i][j];
-                for (int ii = 0; ii < m_row; ii++)
+                int oldDoorID = mazeIndex2Type[i][j];
+                for (const auto pos : mazeType2Indexs[oldDoorID])
                 {
-                    for (int jj = 0; jj < m_col; jj++)
-                    {
-                        if (mazeTypes[ii][jj] == oldDoorID)
-                        {
-                            mazeTypes[ii][jj] = newRoomID;
-                        }
-                    }
+                    mazeIndex2Type[pos.x][pos.y] = newRoomID;
                 }
+                mazeType2Indexs[newRoomID].insert(mazeType2Indexs[newRoomID].end(),
+                                                  mazeType2Indexs[oldDoorID].begin(),
+                                                  mazeType2Indexs[oldDoorID].end());
+                mazeType2Indexs.erase(oldDoorID);
             }
         }
 
