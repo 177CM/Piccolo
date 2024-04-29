@@ -15,7 +15,7 @@ namespace Piccolo
 
         const spdlog::sinks_init_list sink_list = {console_sink};
 
-        spdlog::init_thread_pool(8192, 1);
+        spdlog::init_thread_pool(8192 * 20, 1);
 
         m_logger = std::make_shared<spdlog::async_logger>("muggle_logger",
                                                           sink_list.begin(),

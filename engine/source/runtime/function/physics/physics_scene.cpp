@@ -146,7 +146,7 @@ namespace Piccolo
         }
 
         body_interface.AddBody(jph_body->GetID(), JPH::EActivation::Activate);
-        LOG_INFO("Add Body: {}", jph_body->GetID().GetIndexAndSequenceNumber());
+        // LOG_INFO("Add Body: {}", jph_body->GetID().GetIndexAndSequenceNumber());
 
         return jph_body->GetID().GetIndexAndSequenceNumber();
     }
