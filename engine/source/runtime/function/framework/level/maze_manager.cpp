@@ -78,83 +78,92 @@ namespace Piccolo
 
         // Maze node Dir -> 0:Up      1:Right     2:Down      3:Left   true:can break  false: cant break
         // Init maze
-        for (int i = 0; i < m_row; i++)
+        MazeTicker tick_logger;
+        for (auto t = 0; t < 100000; t++)
         {
-            for (int j = 0; j < m_col; j++)
+            // init the struct of maze
+            mazeType2Indexs.clear();
+            for (int i = 0; i < m_row; i++)
             {
-                // init type of the maze node
-                mazeIndex2Type[i][j]           = i * m_col + j;
-                mazeType2Indexs[i * m_col + j] = {{i, j}};
+                for (int j = 0; j < m_col; j++)
+                {
+                    // init type of the maze node
+                    mazeIndex2Type[i][j]           = i * m_col + j;
+                    mazeType2Indexs[i * m_col + j] = {{i, j}};
+                    mazeDoors[i][j]                = {false, false, false, false}; // for test
+                }
             }
-        }
 
-        // Build maze
-        for (int i = 0; i < m_row; i++)
-        {
-            for (int j = 0; j < m_col; j++)
+            // Build maze
+            for (int i = 0; i < m_row; i++)
             {
-                std::vector<int> candidateDoorsDir;
-                if (i > 0 && mazeIndex2Type[i - 1][j] != mazeIndex2Type[i][j])
+                for (int j = 0; j < m_col; j++)
                 {
-                    candidateDoorsDir.push_back(0);
-                }
-                // check right
-                if (j < m_col - 1 && mazeIndex2Type[i][j + 1] != mazeIndex2Type[i][j])
-                {
-                    candidateDoorsDir.push_back(1);
-                }
-                // check down
-                if (i < m_row - 1 && mazeIndex2Type[i + 1][j] != mazeIndex2Type[i][j])
-                {
-                    candidateDoorsDir.push_back(2);
-                }
-                // check right
-                if (j > 0 && mazeIndex2Type[i][j - 1] != mazeIndex2Type[i][j])
-                {
-                    candidateDoorsDir.push_back(3);
-                }
-                if (candidateDoorsDir.size() == 0)
-                {
-                    break;
-                }
-                // Randomly break wall
-                // TODO: add a real random by time!
-                int openDoorDir = candidateDoorsDir[std::rand() % candidateDoorsDir.size()];
-                int newRoomID;
-                mazeDoors[i][j][openDoorDir] = true;
-                switch (openDoorDir) // 0:Up      1:Right     2:Down      3:Left
-                {
-                    case 0:
-                        mazeDoors[i - 1][j][2] = true;
-                        newRoomID              = mazeIndex2Type[i - 1][j];
+                    std::vector<int> candidateDoorsDir;
+                    if (i > 0 && mazeIndex2Type[i - 1][j] != mazeIndex2Type[i][j])
+                    {
+                        candidateDoorsDir.push_back(0);
+                    }
+                    // check right
+                    if (j < m_col - 1 && mazeIndex2Type[i][j + 1] != mazeIndex2Type[i][j])
+                    {
+                        candidateDoorsDir.push_back(1);
+                    }
+                    // check down
+                    if (i < m_row - 1 && mazeIndex2Type[i + 1][j] != mazeIndex2Type[i][j])
+                    {
+                        candidateDoorsDir.push_back(2);
+                    }
+                    // check right
+                    if (j > 0 && mazeIndex2Type[i][j - 1] != mazeIndex2Type[i][j])
+                    {
+                        candidateDoorsDir.push_back(3);
+                    }
+                    if (candidateDoorsDir.size() == 0)
+                    {
                         break;
-                    case 1:
-                        mazeDoors[i][j + 1][3] = true;
-                        newRoomID              = mazeIndex2Type[i][j + 1];
-                        break;
-                    case 2:
-                        mazeDoors[i + 1][j][0] = true;
-                        newRoomID              = mazeIndex2Type[i + 1][j];
-                        break;
-                    case 3:
-                        mazeDoors[i][j - 1][1] = true;
-                        newRoomID              = mazeIndex2Type[i][j - 1];
-                        break;
+                    }
+                    // Randomly break wall
+                    // TODO: add a real random by time!
+                    int openDoorDir = candidateDoorsDir[std::rand() % candidateDoorsDir.size()];
+                    int newRoomID;
+                    mazeDoors[i][j][openDoorDir] = true;
+                    switch (openDoorDir) // 0:Up      1:Right     2:Down      3:Left
+                    {
+                        case 0:
+                            mazeDoors[i - 1][j][2] = true;
+                            newRoomID              = mazeIndex2Type[i - 1][j];
+                            break;
+                        case 1:
+                            mazeDoors[i][j + 1][3] = true;
+                            newRoomID              = mazeIndex2Type[i][j + 1];
+                            break;
+                        case 2:
+                            mazeDoors[i + 1][j][0] = true;
+                            newRoomID              = mazeIndex2Type[i + 1][j];
+                            break;
+                        case 3:
+                            mazeDoors[i][j - 1][1] = true;
+                            newRoomID              = mazeIndex2Type[i][j - 1];
+                            break;
 
-                    default:
-                        break;
+                        default:
+                            break;
+                    }
+                    int oldDoorID = mazeIndex2Type[i][j];
+                    for (const auto pos : mazeType2Indexs[oldDoorID])
+                    {
+                        mazeIndex2Type[pos.x][pos.y] = newRoomID;
+                    }
+                    mazeType2Indexs[newRoomID].insert(mazeType2Indexs[newRoomID].end(),
+                                                      mazeType2Indexs[oldDoorID].begin(),
+                                                      mazeType2Indexs[oldDoorID].end());
+                    mazeType2Indexs.erase(oldDoorID);
                 }
-                int oldDoorID = mazeIndex2Type[i][j];
-                for (const auto pos : mazeType2Indexs[oldDoorID])
-                {
-                    mazeIndex2Type[pos.x][pos.y] = newRoomID;
-                }
-                mazeType2Indexs[newRoomID].insert(mazeType2Indexs[newRoomID].end(),
-                                                  mazeType2Indexs[oldDoorID].begin(),
-                                                  mazeType2Indexs[oldDoorID].end());
-                mazeType2Indexs.erase(oldDoorID);
             }
+            tick_logger.tick();
         }
+        tick_logger.ShowTickLog();
 
         // generate the path from startPos to endPos
         generatePath(mazeDoors, {0, 0}, {m_row - 1, m_col - 1});
