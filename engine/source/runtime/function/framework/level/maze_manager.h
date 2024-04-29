@@ -3,6 +3,7 @@
 #include "runtime/core/base/macro.h"
 #include "runtime/core/math/math.h"
 
+#include <chrono>
 #include <memory>
 #include <runtime/core/base/hash.h>
 #include <vector>
@@ -37,6 +38,32 @@ namespace Piccolo
         bool              operator>(const MazeNode& rhs) const { return this->cost > rhs.cost; }
         MazeNode() : G(0), H(0), cost(0) {}
         MazeNode(const MazePositionIndex& _index, int _G, int _H) : index(_index), G(_G), H(_H), cost(_G + _H) {}
+    };
+
+    struct MazeTicker
+    {
+        std::chrono::time_point<std::chrono::steady_clock> start, end;
+        std::chrono::duration<float>                       duration;
+        std::vector<float>                                 m_ticks;
+        void                                               ShowTickLog()
+        {
+            float sum = 0;
+            for (auto tick : m_ticks)
+            {
+                sum += tick;
+            }
+            LOG_INFO("All operations have been completed, each operation cost {}ms on average.", sum / m_ticks.size());
+        }
+        void tick()
+        {
+            end      = std::chrono::high_resolution_clock::now();
+            duration = end - start;
+            start    = end;
+            float ms = duration.count() * 1000.0f;
+            m_ticks.push_back(ms);
+        }
+        MazeTicker() { start = std::chrono::high_resolution_clock::now(); }
+        ~MazeTicker() {}
     };
 } // namespace Piccolo
 

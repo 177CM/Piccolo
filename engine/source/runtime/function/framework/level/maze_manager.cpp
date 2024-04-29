@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <memory>
 #include <queue>
+#include <time.h>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -38,7 +39,8 @@ namespace Piccolo
             LOG_FATAL("The size of Maze has to be set first!");
             return;
         }
-
+        // set random seed
+        std::srand(std::time(nullptr));
         // 1:Iterate through and delete all existing entities in the scene
         clearCurrentLevel(level);
 
