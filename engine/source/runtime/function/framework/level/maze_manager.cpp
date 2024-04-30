@@ -314,30 +314,32 @@ namespace Piccolo
             {0, -1}  // 3:Left
         };           // maze node's dir
 
-        while (!open.empty())
+        while (!open.empty()) // 当整个迷宫被遍历完时停止遍历
         {
             auto mazeNodeTemp = open.top();
-            open.pop();
-            close.insert(mazeNodeTemp.index);
-            openLUT[mazeNodeTemp.index.x][mazeNodeTemp.index.y] = true;
+            open.pop();                                                  // 弹出open容器中代价最小的节点
+            close.insert(mazeNodeTemp.index);                            // 将该节点插入close容器中
+            openLUT[mazeNodeTemp.index.x][mazeNodeTemp.index.y] = false; // 在look up table中将该位置标记
             if (mazeNodeTemp.index == endPos)
             {
-                break;
+                break; // 如果当前节点是终点则停止
             }
-            for (auto i = 0; i < 4; i++)
+            for (auto i = 0; i < 4; i++) // 检查该房间相邻可达房间的状态
             {
+                // 将该节点的四个方向中没有墙壁阻挡的、合法的、不在close容器中的房间加入open容器，作为下次遍历时可供选择的节点
                 MazePositionIndex MPI_temp(mazeNodeTemp.index + offset[i]);
                 if (mazeDoors[mazeNodeTemp.index.x][mazeNodeTemp.index.y][i] && checkValid(MPI_temp) &&
                     close.find(MPI_temp) == close.end())
                 {
+                    // 计算该节点的花费
                     MazeNode temp(MPI_temp, mazeNodeTemp.G + 1, ManhattanDis(endPos, MPI_temp));
-                    if (openLUT[MPI_temp.x][MPI_temp.y])
+                    if (openLUT[MPI_temp.x][MPI_temp.y]) // 当前节点不在open容器中,将其加入open容器
                     {
                         openLUT[MPI_temp.x][MPI_temp.y] = false;
                         all_path[temp.index]            = mazeNodeTemp;
                         open.push(temp);
                     }
-                    else
+                    else // 否则检查当前这条抵达该节点的通路是否更优，若更优则更新该节点的父节点
                     {
                         if (all_path[temp.index].G > temp.G)
                         {
@@ -352,7 +354,7 @@ namespace Piccolo
         }
         auto iter = endPos;
         while (iter != startPos)
-        {
+        { // 从终点开始找到通向起点的道路
             m_path.push_back(iter);
             iter = all_path[iter].index;
         }
