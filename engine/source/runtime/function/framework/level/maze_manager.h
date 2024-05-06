@@ -76,7 +76,7 @@ namespace Piccolo
             {
                 sum += count;
             }
-            LOG_INFO("All operations have been completed, each operation cost {} percent \% on average.",
+            LOG_INFO("All operations have been completed, each operation cost {}\% on average.",
                      static_cast<float>(100 * (sum / m_counts.size())));
             m_counts.clear();
         }
