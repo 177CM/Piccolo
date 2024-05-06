@@ -161,12 +161,11 @@ namespace Piccolo
                     mazeType2Indexs.erase(oldDoorID);
                 }
             }
-            m_bench_marker.tick();
+            generatePath(mazeDoors, {0, 0}, {m_row - 1, m_col - 1});
             LOG_INFO("Round: {0}/100000", t);
         }
         m_bench_marker.ShowTickLog();
-        // m_bench_marker.ShowCountLog();
-        generatePath(mazeDoors, {0, 0}, {m_row - 1, m_col - 1});
+        m_bench_marker.ShowCountLog();
 
         // generate the path from startPos to endPos
 
@@ -305,7 +304,7 @@ namespace Piccolo
                                    MazePositionIndex                            startPos,
                                    MazePositionIndex                            endPos)
     {
-        // m_bench_marker.tickstart();
+        m_bench_marker.tickstart();
         // Initializes the data structure of the open close set in the maze
         std::priority_queue<MazeNode, std::vector<MazeNode>, std::greater<MazeNode>> open;
         std::unordered_set<MazePositionIndex>                                        close;
@@ -373,7 +372,7 @@ namespace Piccolo
         m_path.push_back(startPos);
         std::reverse(m_path.begin(), m_path.end());
         // LOG_INFO("Path generate success!");
-        // m_bench_marker.tickend();
+        m_bench_marker.tickend();
         m_bench_marker.CountPush(static_cast<float>(open.size() + close.size()) / static_cast<float>(m_col * m_row));
     }
 

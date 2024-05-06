@@ -176,7 +176,7 @@ namespace Piccolo
         JPH::BodyInterface& body_interface = m_physics.m_jolt_physics_system->GetBodyInterface();
         for (uint32_t body_id : m_pending_remove_bodies)
         {
-            LOG_INFO("Remove Body {}", body_id)
+            // LOG_INFO("Remove Body {}", body_id)
             body_interface.RemoveBody(JPH::BodyID(body_id));
             body_interface.DestroyBody(JPH::BodyID(body_id));
         }
