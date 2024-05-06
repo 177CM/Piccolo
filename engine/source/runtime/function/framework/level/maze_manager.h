@@ -40,12 +40,23 @@ namespace Piccolo
         MazeNode(const MazePositionIndex& _index, int _G, int _H) : index(_index), G(_G), H(_H), cost(_G + _H) {}
     };
 
-    struct MazeTicker
+    struct MazeBenchMarker
     {
         std::chrono::time_point<std::chrono::steady_clock> start, end;
         std::chrono::duration<float>                       duration;
         std::vector<float>                                 m_ticks;
-        void                                               ShowTickLog()
+        std::vector<float>                                 m_counts;
+
+        void tickstart() { start = std::chrono::high_resolution_clock::now(); }
+        void tickend()
+        {
+            end      = std::chrono::high_resolution_clock::now();
+            duration = end - start;
+            float ms = duration.count() * 1000.0f;
+            m_ticks.push_back(ms);
+        }
+
+        void ShowTickLog()
         {
             float sum = 0;
             for (auto tick : m_ticks)
@@ -53,17 +64,29 @@ namespace Piccolo
                 sum += tick;
             }
             LOG_INFO("All operations have been completed, each operation cost {}ms on average.", sum / m_ticks.size());
+            m_ticks.clear();
         }
+
+        void CountPush(float x) { m_counts.push_back(x); }
+
+        void ShowCountLog()
+        {
+            float sum = 0;
+            for (auto count : m_counts)
+            {
+                sum += count;
+            }
+            LOG_INFO("All operations have been completed, each operation cost {}ms on average.", sum / m_counts.size());
+            m_counts.clear();
+        }
+
         void tick()
         {
-            end      = std::chrono::high_resolution_clock::now();
-            duration = end - start;
-            start    = end;
-            float ms = duration.count() * 1000.0f;
-            m_ticks.push_back(ms);
+            tickend();   // 结束上一个计时
+            tickstart(); // 开始新的计时
         }
-        MazeTicker() { start = std::chrono::high_resolution_clock::now(); }
-        ~MazeTicker() {}
+        MazeBenchMarker() { start = std::chrono::high_resolution_clock::now(); }
+        ~MazeBenchMarker() {}
     };
 } // namespace Piccolo
 
@@ -138,5 +161,6 @@ namespace Piccolo
         int                            m_row = 0;
         int                            m_col = 0;
         std::vector<MazePositionIndex> m_path;
+        MazeBenchMarker                m_bench_marker;
     };
 } // namespace Piccolo
